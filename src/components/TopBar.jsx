@@ -33,8 +33,12 @@ function SessionClock({ session, paused }) {
   const countdown = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`
 
   return (
-    <span className="num text-xs whitespace-nowrap text-text-faint" title="Each trading day lasts 2 minutes">
-      Day {session.day} <span aria-hidden>·</span> closes in <span className="text-text-muted">{countdown}</span>
+    <span
+      className="num inline-flex h-7 items-center rounded-full border border-border px-2.5 text-xs whitespace-nowrap text-text-faint"
+      title="Prices tick every 5 seconds · each trading day lasts 2 minutes"
+    >
+      Day {session.day} <span aria-hidden>&nbsp;·&nbsp;</span> closes in&nbsp;<span className="text-text-muted">{countdown}</span>
+      <span className="sr-only">. Prices tick every 5 seconds and each trading day lasts 2 minutes.</span>
     </span>
   )
 }

@@ -193,7 +193,7 @@ function HowItsBuilt() {
           <p className="label-caps text-accent-fg">How it's built</p>
           <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Built for every tick.</h2>
           <p className="mt-4 text-base leading-relaxed text-text-muted">
-            Prices stream in every three seconds, and every panel recomputes on each one. So nothing re-sorts the
+            Prices stream in every five seconds, and every panel recomputes on each one. So nothing re-sorts the
             whole market or rescans history. Each feature runs on a hand-written data structure picked for the
             exact update it has to handle.
           </p>

@@ -70,7 +70,7 @@ export function PriceChart({ data, showMa5, showMa20, height = 280 }) {
             isAnimationActive={false}
           />
           <Area
-            type="monotone"
+            type="linear"
             dataKey="price"
             stroke={color}
             strokeWidth={1.75}
@@ -80,7 +80,7 @@ export function PriceChart({ data, showMa5, showMa20, height = 280 }) {
           />
           {showMa5 && (
             <Line
-              type="monotone"
+              type="linear"
               dataKey="ma5"
               stroke="var(--color-accent)"
               strokeWidth={1.25}
@@ -91,7 +91,7 @@ export function PriceChart({ data, showMa5, showMa20, height = 280 }) {
           )}
           {showMa20 && (
             <Line
-              type="monotone"
+              type="linear"
               dataKey="ma20"
               stroke="var(--color-amber)"
               strokeWidth={1.25}

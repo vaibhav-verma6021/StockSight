@@ -75,7 +75,7 @@ export default function Dashboard() {
         <div className="mb-6 flex flex-wrap items-end justify-between gap-2">
           <div>
             <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Markets</h1>
-            <p className="mt-1 text-body text-text-muted">US equities · prices tick every 5 seconds · each trading day lasts 2 minutes</p>
+            <p className="mt-1 text-body text-text-muted">US equities</p>
           </div>
         </div>
 
