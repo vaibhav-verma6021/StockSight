@@ -9,26 +9,22 @@ export const DAY_MS = 2 * 60 * 1000
 export const TICKS_PER_DAY = DAY_MS / TICK_MS // 24
 export const CLOSED_DAYS = 59 // finalized daily closes kept per stock
 export const HISTORY_LENGTH = CLOSED_DAYS + 1 // chart points: closed days + today
-export const DEFAULT_VOL = 0.0115
 // Only a share of the market trades on each tick (~30–50%), like a real feed
 // where quotes arrive unevenly. Stocks that don't tick keep their snapshot
 // object untouched, so memoized table rows skip re-rendering.
 export const MIN_UPDATE_SHARE = 0.3
 export const MAX_UPDATE_SHARE = 0.5
 
-// A stock trades on about TICKS_PER_DAY * 40% ticks a day. Scaling each move
-// by 1 / √(that count) keeps the whole day's move close to its daily vol.
-export const TICK_VOL_SCALE = 1 / Math.sqrt(TICKS_PER_DAY * ((MIN_UPDATE_SHARE + MAX_UPDATE_SHARE) / 2))
+// Largest random move on one tick, by volatility tier (fraction of price).
+export const TICK_MOVE = { calm: 0.0003, normal: 0.0006, volatile: 0.0012 }
 
-const SQRT3 = Math.sqrt(3)
+// Each tick also pulls the price back toward the day's open by this share of
+// the gap, so a day's change stays in a realistic band instead of wandering.
+export const REVERSION = 0.04
 
-/**
- * Next price from a small random walk, rounded to cents. `vol` is the std dev
- * of one move (the caller scales daily vol down to a per-tick vol). A uniform
- * move in [-a, a] has std dev a / √3, so the bound is vol · √3.
- */
-export function nextPrice(price, rand = Math.random, vol = DEFAULT_VOL) {
-  const pct = (rand() * 2 - 1) * vol * SQRT3
+/** Next price: uniform noise in ±maxMove plus a pull toward `anchor`, in cents. */
+export function nextPrice(price, rand = Math.random, maxMove = TICK_MOVE.normal, anchor = price) {
+  const pct = (rand() * 2 - 1) * maxMove - REVERSION * (price / anchor - 1)
   const next = price * (1 + pct)
   return Math.max(0.01, Math.round(next * 100) / 100)
 }

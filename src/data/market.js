@@ -21,7 +21,7 @@ import {
   MIN_UPDATE_SHARE,
   nextPrice,
   nextTradingDay,
-  TICK_VOL_SCALE,
+  TICK_MOVE,
   TICKS_PER_DAY,
 } from './simulator.js'
 import { movingAverage, MovingAverage } from '../ds/slidingWindow.js'
@@ -85,7 +85,7 @@ function describe(st) {
 
 export class MarketFeed {
   /**
-   * @param data     seed: { dates, stocks: [{ ticker, name, sector, vol, prices }] }
+   * @param data     seed: { dates, stocks: [{ ticker, name, sector, tier, prices }] }
    * @param random   PRNG in [0, 1), injectable for tests
    * @param options  ticksPerDay: ticks between rollovers (Infinity = never)
    *                 verify: brute-force check every span after each step
@@ -108,14 +108,14 @@ export class MarketFeed {
     this.snapshot = this.buildSnapshot()
   }
 
-  initState({ ticker, name, sector, vol, prices }) {
+  initState({ ticker, name, sector, tier, prices }) {
     const closedDays = prices.slice(0, -1).slice(-CLOSED_DAYS)
     const { high, low } = extremes(closedDays)
     const st = {
       ticker,
       name,
       sector,
-      vol,
+      tier,
       closedDays,
       today: { open: closedDays[closedDays.length - 1], price: prices[prices.length - 1] },
       ma5: new MovingAverage(MA_FAST),
@@ -164,7 +164,7 @@ export class MarketFeed {
       if (this.random() >= share) continue // no trade this tick
       const st = this.states[i]
       const prev = st.today.price
-      const price = nextPrice(prev, this.random, st.vol * TICK_VOL_SCALE)
+      const price = nextPrice(prev, this.random, TICK_MOVE[st.tier], st.today.open)
       st.today = { open: st.today.open, price }
       st.direction = price > prev ? 'up' : price < prev ? 'down' : null
       st.updatedAt = this.tick

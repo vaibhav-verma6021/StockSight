@@ -15,13 +15,13 @@ function seeded(seed) {
 const stackOf = (feed) => feed.states.map((st) => st.spanner.stack.items.map((e) => ({ ...e })))
 
 describe('MarketFeed', () => {
-  it('seeds 65 stocks, each with a sector and a volatility', () => {
+  it('seeds 65 stocks, each with a sector and a volatility tier', () => {
     const feed = new MarketFeed()
     expect(feed.stocks.length).toBe(65)
     expect(new Set(feed.stocks.map((s) => s.ticker)).size).toBe(65)
     for (const st of feed.states) {
       expect(st.sector).toBeTruthy()
-      expect(st.vol).toBeGreaterThan(0)
+      expect(['calm', 'normal', 'volatile']).toContain(st.tier)
       expect(st.closedDays.length).toBe(CLOSED_DAYS)
     }
   })
@@ -105,6 +105,17 @@ describe('MarketFeed', () => {
     const share = ticked / (ticks * feed.stocks.length)
     expect(share).toBeGreaterThan(MIN_UPDATE_SHARE - 0.05)
     expect(share).toBeLessThan(MAX_UPDATE_SHARE + 0.05)
+  })
+
+  it('mean reversion keeps the daily change in a realistic band', () => {
+    // No rollover, so each stock drifts against the same open for 2,000 ticks.
+    const feed = new MarketFeed(undefined, seeded(13), { ticksPerDay: Infinity })
+    for (let i = 0; i < 2000; i++) {
+      for (const s of feed.step().stocks) {
+        const limit = feed.states.find((st) => st.ticker === s.ticker).tier === 'volatile' ? 4 : 2
+        expect(Math.abs(s.changePct)).toBeLessThan(limit)
+      }
+    }
   })
 
   it('top movers are the k best / worst by change', () => {

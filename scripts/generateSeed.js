@@ -14,13 +14,21 @@ const END_DATE = '2026-09-25'
 
 // Daily volatility (std dev of returns) by kind of stock. Staples, telecoms
 // and big banks move least; small or speculative tech and crypto-linked names
-// move most. The live simulator reuses the same number per stock.
+// move most.
 const VOL = {
   defensive: 0.008, // staples, telecom, big pharma
   steady: 0.011, // banks, payment networks, industrial blue chips
   large: 0.014, // mega-cap tech and large growth
   growth: 0.021, // high-multiple growth, semis, energy services
   volatile: 0.033, // speculative, crypto-linked, small-float names
+}
+
+// Live tick size tier (see TICK_MOVE in src/data/simulator.js). NVDA and AMD
+// have large-cap history but trade like momentum names intraday.
+const VOLATILE_INTRADAY = new Set(['NVDA', 'AMD'])
+function tierOf({ ticker, vol }) {
+  if (vol >= VOL.volatile || VOLATILE_INTRADAY.has(ticker)) return 'volatile'
+  return vol <= VOL.steady ? 'calm' : 'normal'
 }
 
 const STOCKS = [
@@ -140,9 +148,14 @@ function walk(rand, start, vol) {
   const prices = [start]
   let drift = 0
   for (let i = 1; i < DAYS; i++) {
-    // Every ~12 days pick a new trend: up, down, or sideways.
-    if (i % 12 === 1) drift = (rand() - 0.45) * vol * 0.9
-    const ret = drift + gaussian(rand) * vol
+    // Every ~12 days pick a new trend (up, down or sideways), centered on zero
+    // so the market as a whole doesn't just grind upward.
+    if (i % 12 === 1) drift = (rand() - 0.5) * vol * 0.6
+    // A weak pull back toward the start keeps 60-day net drift small.
+    const pull = -0.04 * (prices[i - 1] / start - 1)
+    // The last point is today's live price, only partway through the session.
+    const scale = i === DAYS - 1 ? 0.35 : 1
+    const ret = (drift + pull + gaussian(rand) * vol) * scale
     prices.push(prices[i - 1] * (1 + ret))
   }
   return prices.map((p) => Math.round(p * 100) / 100)
@@ -151,12 +164,12 @@ function walk(rand, start, vol) {
 const rand = mulberry32(20260925)
 const seed = {
   dates: tradingDays(END_DATE, DAYS),
-  stocks: STOCKS.map(({ ticker, name, sector, start, vol }) => ({
-    ticker,
-    name,
-    sector,
-    vol,
-    prices: walk(rand, start, vol),
+  stocks: STOCKS.map((s) => ({
+    ticker: s.ticker,
+    name: s.name,
+    sector: s.sector,
+    tier: tierOf(s),
+    prices: walk(rand, s.start, s.vol),
   })),
 }
 
