@@ -18,7 +18,8 @@ const SORTERS = {
 }
 
 const cell = 'px-3 py-3 first:pl-4 last:pr-4'
-const hideOnMobile = 'hidden md:table-cell'
+// Sparkline and trend need room; below 1100px they'd squeeze Momentum.
+const hideBelowWide = 'hidden min-[1100px]:table-cell'
 
 // Opaque background so rows scroll underneath the sticky header, and an inset
 // shadow in place of a border (borders on sticky cells scroll away).
@@ -78,9 +79,18 @@ const Row = memo(function Row({ stock, watched, onSelect, onToggleWatch }) {
   const flash = stock.direction === 'up' ? 'animate-flash-up' : stock.direction === 'down' ? 'animate-flash-down' : ''
   return (
     <tr
+      role={onSelect ? 'button' : undefined}
       tabIndex={onSelect ? 0 : undefined}
+      aria-label={onSelect ? `${stock.ticker}, ${stock.name}. Open details` : undefined}
       onClick={() => onSelect?.(stock.ticker)}
-      onKeyDown={(e) => e.key === 'Enter' && onSelect?.(stock.ticker)}
+      onKeyDown={(e) => {
+        // Ignore keys aimed at the star button inside the row.
+        if (!onSelect || e.target !== e.currentTarget) return
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault() // Space would otherwise scroll the table
+          onSelect(stock.ticker)
+        }
+      }}
       className="group cursor-pointer border-t border-border transition-colors duration-150 hover:bg-bg-hover focus-visible:bg-bg-hover focus-visible:outline-none"
     >
       <td className={clsx(cell, 'w-10 pr-0')}>
@@ -110,7 +120,7 @@ const Row = memo(function Row({ stock, watched, onSelect, onToggleWatch }) {
       <td className={clsx(cell, 'text-right')}>
         <Change value={stock.changePct} pill className="min-w-[72px]" />
       </td>
-      <td className={clsx(cell, hideOnMobile, 'text-right')}>
+      <td className={clsx(cell, hideBelowWide, 'text-right')}>
         <div className="flex justify-end">
           <Sparkline data={[...stock.closedDays.slice(1 - SPARK_POINTS), stock.price]} />
         </div>
@@ -118,7 +128,7 @@ const Row = memo(function Row({ stock, watched, onSelect, onToggleWatch }) {
       <td className={clsx(cell, 'text-right')}>
         <Momentum span={stock.span} maxSpan={stock.maxSpan} />
       </td>
-      <td className={clsx(cell, hideOnMobile, 'text-right')}>
+      <td className={clsx(cell, hideBelowWide, 'text-right')}>
         <Trend trend={stock.trend} />
       </td>
     </tr>
@@ -141,13 +151,13 @@ function SkeletonRows({ count }) {
       <td className={cell}>
         <Skeleton className="ml-auto h-6 w-[72px] rounded-full" />
       </td>
-      <td className={clsx(cell, hideOnMobile)}>
+      <td className={clsx(cell, hideBelowWide)}>
         <Skeleton className="ml-auto h-6 w-24" />
       </td>
       <td className={cell}>
         <Skeleton className="ml-auto h-6 w-20 rounded-full" />
       </td>
-      <td className={clsx(cell, hideOnMobile)}>
+      <td className={clsx(cell, hideBelowWide)}>
         <Skeleton className="ml-auto size-7 rounded-full" />
       </td>
     </tr>
@@ -187,11 +197,11 @@ export function StockTable({ stocks, loading, emptyTitle, isWatched, onSelect, o
             <SortHeader label="Symbol" column="ticker" align="left" {...headerProps} />
             <SortHeader label="Price" column="price" className="text-right" {...headerProps} />
             <SortHeader label="Change" column="changePct" className="text-right" {...headerProps} />
-            <th scope="col" className={clsx(cell, headCell, hideOnMobile, 'label-caps text-right font-medium')}>
+            <th scope="col" className={clsx(cell, headCell, hideBelowWide, 'label-caps text-right font-medium')}>
               30D
             </th>
             <SortHeader label="Momentum" column="span" className="text-right" {...headerProps} />
-            <th scope="col" className={clsx(cell, headCell, hideOnMobile, 'label-caps text-right font-medium')}>
+            <th scope="col" className={clsx(cell, headCell, hideBelowWide, 'label-caps text-right font-medium')}>
               Trend
             </th>
           </tr>
