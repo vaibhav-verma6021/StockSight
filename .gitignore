@@ -1,0 +1,19 @@
+node_modules
+dist
+.dist
+.vercel
+.DS_Store
+*.local
+.env*
+
+# editor / assistant tool config
+.claude/
+CLAUDE.md
+.cursor/
+.cursorrules
+.aider*
+.copilot/
+.github/copilot-instructions.md
+.windsurfrules
+.vscode/
+.idea/
